@@ -21,7 +21,7 @@ public class PetClient {
 	
 	private static AtomicInteger sum = new AtomicInteger(1);
 	
-	public static void main(String[] args) {
+	public static void request() {
 
 		long startTime = System.currentTimeMillis();
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(100);
@@ -29,9 +29,9 @@ public class PetClient {
 
 		Runnable runnable = () -> {
 			try {
-				Socket client = new Socket(host, CommonConstant.PORT);
+				Socket client = new Socket("127.0.0.1", CommonConstant.PORT);
 				String request = CommonConstant.REQUEST_GET + CommonConstant.SPACE + PetSpecies.randomPetEnum();
-				if (sum.get() > 10000) {
+				if (sum.get() > 100) {
 					request = CommonConstant.REQUEST_LIST2;
 				} else {
 					sum.incrementAndGet();
@@ -50,14 +50,15 @@ public class PetClient {
 				client.close();
 				if (request.equals(CommonConstant.REQUEST_LIST2)) {
 					long endTime = System.currentTimeMillis();
-					System.out.println(endTime - startTime);
+					System.out.println("耗费时长（毫秒）：" + (endTime - startTime));
+					Thread.currentThread().sleep(500);//打印完整日志
 					System.exit(0);
 				}
-			} catch (IOException e) {
+			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
 		};
-		executor.scheduleAtFixedRate(runnable, 0, 1, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(runnable, 0, 10, TimeUnit.MILLISECONDS);
 		
 	}
 }

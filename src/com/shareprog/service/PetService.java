@@ -35,8 +35,20 @@ public class PetService {
 	public String adoptPet(String[] requestMethod) {
 		if (requestMethod.length > 1) {
 			PetSpecies petSpecies = PetSpecies.valueOf(requestMethod[1]);
-			petConcurrentHashMap.computeIfPresent(petSpecies, (k, v) -> new AtomicInteger(v.incrementAndGet()));
-			petConcurrentHashMap.computeIfAbsent(petSpecies, k -> new AtomicInteger(1));
+//			petConcurrentHashMap.compute(petSpecies, (k, v) -> {
+//				if (v == null) {
+//					v = new AtomicInteger(1);
+//				} else {
+//					v.incrementAndGet();
+//				}
+//				return v;
+//			});
+			AtomicInteger computeIfPresent = petConcurrentHashMap.computeIfPresent(petSpecies, (k, v) -> new AtomicInteger(v.incrementAndGet()));
+//			petConcurrentHashMap.computeIfAbsent(petSpecies, k -> new AtomicInteger(1));
+			if (computeIfPresent == null) {
+				petConcurrentHashMap.putIfAbsent(petSpecies, new AtomicInteger(1));
+//				petConcurrentHashMap.computeIfAbsent(petSpecies, k -> new AtomicInteger(1));
+			}
 			return CommonConstant.RESPONSE_SUCCESS;
 		}
 		return CommonConstant.RESPONSE_FAILURE;
@@ -58,7 +70,12 @@ public class PetService {
 		}
 		petList = petList.stream().sorted(Comparator.comparingInt(Pet::getQuantity)).collect(Collectors.toList());
 		StringBuffer reponse = new StringBuffer();
-		petList.forEach(p -> reponse.append(p.getSpecies()).append(": ").append(p.getQuantity()).append("\n"));
+		int count = 0;
+		for (Pet p : petList) {
+			reponse.append(p.getSpecies()).append(": ").append(p.getQuantity()).append("\n");
+			count += p.getQuantity();
+		}
+		reponse.append("总数：" + count);
 		return reponse.toString();
 	}
 
